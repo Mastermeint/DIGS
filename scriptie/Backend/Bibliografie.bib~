@@ -1,0 +1,122 @@
+%TODO: Fix this (no journal)
+@Article{ProblemsPolynomiallyEquivalent,
+    author = {Kellog S. Booth, Charles J. Colbourn},
+    journal = {}, 
+    title = {Problems Polynomially Equivalent to Graph Isomorphism},
+    year = {1979},
+    URL = {https://cs.uwaterloo.ca/research/tr/1977/CS-77-04.pdf},
+}
+
+%TODO no journal
+@Book{01Polytopes,
+    author = {G\"unter M. Ziegler}, 
+    title = {Lectures on 0/1-Polytopes},
+    year = {2008},
+    URL = {https://arxiv.org/pdf/math/9909177v1.pdf},
+}
+
+@Book{Leen,
+    author = {Sanjeev Arora, Boaz Barak}, 
+    title = {Computational Complexity: A Modern Approach},
+    publisher = {Cambridge University Press},
+    year = {2009},
+}
+
+@Article{HadamardAtent1,
+    author = {A. Hedayat, W. D. Wallis}, 
+    title = {Hadamard Matrices and Their Applications},
+    journal = {Ann. Statist.},
+    year = {1978},
+}
+@Article{HadamardAtent2,
+    author = {J. Seberry, M. Yamada}, 
+    title = {Hadamard matrices, Sequences, and Block Designs},
+    journal = {Contemporary Design Theory. Wiley-Intersci. Ser. Discrete Math. Optim., Wiley, New
+York},
+    year = {1992},
+}
+
+@Article{Sherman-Morrison,
+    author = {M. S. Bartlett},
+    journal = {The Annals of Mathematical Statistics}, 
+    title = {An Inverse Matrix Adjustment Arising in Discriminant Analysis},
+    year = {1951},
+    URL = {http://projecteuclid.org/euclid.aoms/1177729698},
+}
+
+@Article{HadamardConj,
+    author = {J. Hadamard},
+    journal = {Bull. des Sciences Math}, 
+    title = {Résolution d’une question relative aux déterminants},
+    year = {1893},
+}
+
+@Article{Varga-Nabben,
+    author = {R. Nabben, R. S. Varga},
+    journal = {SIAM Journal on Matrix Analysis and Applications}, 
+    title = {A Linear Algebra Proof That the Inverse of a Strictly Ultrametric Matrix is a Strictly Diagonally Dominant Stieltjes Matrix},
+    year = {1994},
+    URL = {http://www.math.kent.edu/~varga/pub/paper_205.pdf},
+}
+
+@Article{Gramians,
+    author = {Jan Brandts, Sergey Korotov, Michal Krízek},
+    journal = {Linear Algebra and its Applications}, 
+    title = {Dissection of the path-simplex in $\R^n$ into $n$ path-subsimplices},
+    year = {2007},
+}
+
+@Article{Sylvester,
+    author = {J.J. Sylvester},
+    journal = {Philosophical Magazine}, 
+    title = {Thoughts on inverse orthogonal matrices, simultaneous sign successions, and tessellated
+pavements in two or more colours, with applications to Newton’s rule, ornamental
+tile-work, and the theory of numbers},
+    year = {1867},
+}
+
+@Article{HadamardComputation1,
+    author = {D.Z. Dokovich},
+    journal = {Combinatorica}, 
+    title = {Hadamard Matrices of order 764 exist},
+    year = {2008},
+}
+
+@Article{HadamardComputation2,
+    author = {H. Kharaghani, B. Tayfeh-Rezaie},
+    journal = {Journal of Combinatorial Design}, 
+    title = {Hadamard Matrix of order 428},
+    year = {2005},
+}
+
+@Book{Hadamardproof1,
+    author = {D.J.H. Garling},
+    publisher = {Cambridge University Press}, 
+    title = {Inequalities: A Journey into Linear Analysis},
+    year = {2007},
+    URL = {},
+}
+
+@Book{Cihangir,
+    author = {A. Cihangir},
+    title = {Nonobtuse Simplices and Special Matrix Classes},
+    year = {2016},
+    URL = {},
+}
+
+@Book{Stieltjes,
+    author = {R. S. Varga},
+    publisher = {Prentice Hall, inc.}, 
+    title = {Matrix Iterative Analysis},
+    year = {1962},
+    URL = {},
+}
+
+
+@online{coverimage,
+ author  = "Wikimedia Commons",
+ title   = "Ordinals",
+ year    = "2012",
+ url     = "https://commons.wikimedia.org/wiki/File:Omega-exp-omega-labeled.svg",
+}
+

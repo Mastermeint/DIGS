@@ -1,0 +1,105 @@
+% Taal en tekenset
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{lipsum}  
+
+% Wiskunde
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{mathtools}
+\usepackage{amsthm}
+\usepackage{hhline}
+\usepackage[pdfborder={0 0 0}]{hyperref}
+
+% Algoritmen
+\usepackage[noend]{algpseudocode}
+\usepackage[]{algorithmicx}
+
+% Opmaak
+\usepackage{todonotes}
+\usepackage{color}
+\usepackage{soul}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{enumitem}
+\usepackage{emptypage}
+\usepackage{afterpage}
+\usepackage{xcolor}
+
+%Tikz
+\usepackage[]{tikz}
+\usepackage{fancybox}
+
+% Bibliografie
+\usepackage{csquotes}
+\usepackage[backend=bibtex,
+style=numeric,
+bibencoding=ascii,
+sorting=nty
+]{biblatex}
+\addbibresource{Backend/Bibliografie}
+
+% Appendices
+\usepackage[]{appendix}
+
+% Aliassen
+\newcommand{\sect}{\section}
+\newcommand{\subsect}{\subsection}
+\newcommand{\cont}{\mathfrak{c}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\I}{\mathbb{I}}
+\newcommand{\J}{\mathbb{J}}
+\newcommand{\Hyp}{\mathcal{H}}
+
+% Mathoperators
+\DeclareMathOperator{\xor}{xor}
+\DeclareMathOperator{\Prob}{P}
+\DeclareMathOperator{\Proj}{Proj}
+\DeclareMathOperator{\ord}{ord}
+\DeclareMathOperator{\Span}{Span}
+\DeclareMathOperator{\Id}{Id}
+\DeclareMathOperator{\deter}{det}
+
+% Mooiere lege verzameling
+\let\oldemptyset\emptyset
+\let\emptyset\varnothing
+
+% Stellingen, lemmas etc.
+\theoremstyle{plain}
+\newtheorem{thm}{Theorem}[section]
+\newtheorem{lem}[thm]{Lemma}
+\newtheorem{prop}[thm]{Proposition}
+\newtheorem{cor}[thm]{Corollary}
+
+\theoremstyle{definition}
+\newtheorem{defn}[thm]{Definition}
+\newtheorem{conj}{Conjecture}[section]
+\newtheorem{exmp}{Example}[section]
+\newtheorem*{axm}{Axioma}
+\newtheorem{rem}{Remark}[section]
+\newtheorem*{note}{Note}
+
+% Geen indent na definities en stellingen etc.
+\AfterEndEnvironment{thm}{\noindent\ignorespaces}
+\AfterEndEnvironment{lem}{\noindent\ignorespaces}
+\AfterEndEnvironment{prop}{\noindent\ignorespaces}
+\AfterEndEnvironment{cor}{\noindent\ignorespaces}
+\AfterEndEnvironment{defn}{\noindent\ignorespaces}
+\AfterEndEnvironment{conj}{\noindent\ignorespaces}
+\AfterEndEnvironment{exmp}{\noindent\ignorespaces}
+\AfterEndEnvironment{axm}{\noindent\ignorespaces}
+\AfterEndEnvironment{rem}{\noindent\ignorespaces}
+\AfterEndEnvironment{note}{\noindent\ignorespaces}
+\AfterEndEnvironment{proof}{\noindent\ignorespaces}
+
+% Maakt inhoudsopgave klikbaar
+\hypersetup{
+    colorlinks,
+    citecolor=black,
+    filecolor=black,
+    linkcolor=black,
+    urlcolor=black
+}
