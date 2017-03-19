@@ -10,31 +10,41 @@
 
 
 import networkx as nx
+import numpy as np
 
 
 G=nx.Graph()
 
-# source for computing fast prime list
-# http://stackoverflow.com/questions/16004407/a-fast-prime-number-sieve-in-python
-def sieve_for_primes_to(n):
-    size = n//2
-    sieve = [1]*size
-    limit = int(n**0.5)
-    for i in range(1,limit):
-        if sieve[i]:
-            val = 2*i+1
-            tmp = ((size-1) - i)//val 
-            sieve[i+val::val] = [0]*tmp
-    return [2] + [i*2+1 for i, v in enumerate(sieve) if v and i>0]
+# source: http://stackoverflow.com/questions/1628949/to-find-first-n-prime-numbers-in-python
+def prime(i, primes):
+    for prime in primes:
+        if not (i == prime or i % prime):
+            return False
+    primes.add(i)
+    return i
 
+def get_n_primes(n):
+    primes = set([2])
+    i, p = 2, 0
+    while True:
+        if prime(i, primes):
+            p += 1
+            if p == n:
+                return list(primes)
+        i += 1
 
-# G.add_node(1)
-# G.add_nodes_from([2,3])
-
-# H=nx.path_graph(10)
-# G.add_nodes_from(H)
-# G.add_node(H)
-
+# returns the ofset when given Pi and a list of Pml's
+def geto(Pi, lisPm):
+    k = int(Pi * np.prod(lisPm))
+    Pm = 1
+    # in description of oi: oi < Pi and oi mod Pi = 0
+    for Oi in range(0, k, Pi):
+        for Pml in lisPm:
+            if not (Oi % Pml == 1):
+                Pm = Pml
+                break
+        if (Oi % Pm == 1):
+            return Oi
 
 # every DIG vertex is represented as a tuple:
 #           (offset, jumpsize, stepNumber)
@@ -44,23 +54,33 @@ def convert_to_dig( G ):
     listOfNodes = G.nodes()
     listOfEdges = G.edges()
 
-    N = length(listOfNodes)
-    NLisPrime = sieve_for_primes_to(N)
+    N = len(listOfNodes)
+    NLisPrime = get_n_primes(N)
+    #NLisPrime = sieve_for_primes_to(N)
+    counter=0
     
     # initialize DIG vertex
-    for it in range(N):
+    for it in listOfNodes:
         DIG = []
-        p0 = NLisPrime(it)
-        jumpsize = p0
-        offset = 0
-        stepNumber = 0
+        lisOfPm = []
+        p0 = NLisPrime[counter]
 
-        for it2 in range(it):
-            if (G.has_edge(it,it2) || G.has_edge(it2,it)):
-                pm = NLisPrime(it2)
-                jumpsize = jumpsize * pm
-                #offset = offset * pm
-        #offset = (offset + 1) * p0
+        counter2 = 0
+        # keeps track of all primes of vertices it is not connected to
+        for it2 in listOfNodes:
+            if counter2 < counter: break
+            if (G.has_edge(it,it2) or G.has_edge(it2,it)):
+                lisOfPm.append(NLisPrime[counter2])
+            counter2 += 1
 
-        DIG.append((offset, jumpsize, stepNumber))
+        print(lisOfPm)
+        jumpsize = int(p0 * np.prod(lisOfPm))
+        offset = geto(p0, lisOfPm)
+        
+        #print("vertex: " + str(it))
+        #print("jumpsize:" + str(jumpsize))
+        #print("offset: " + str(jumpsize))
+
+        DIG.append((offset, jumpsize))
+        counter +=1
     return DIG

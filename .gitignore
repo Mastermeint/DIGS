@@ -1,4 +1,7 @@
-tignore contributors: remember to update Global/Xcode.gitignore, Objective-C.gitignore & Swift.gitignore
+## Gitignore contributors: remember to update Global/Xcode.gitignore, Objective-C.gitignore & Swift.gitignore
+
+dataStrucDIG/python/__pycache__/
+
 
 ## Build generated
 build/
