@@ -1,86 +1,60 @@
-#!/usr/bin/python3
-
-# author: Meinte Ringia
-
-# using NetworkX to implement dotted interval graphs as 
-# sequence interval graphs
-
-# documentation on NetworkX is on
-# https://networkx.github.io/
-
-
 import networkx as nx
-import numpy as np
+import itertools
+from fractions import gcd
 
+#vertex: offset, jumpsize, steps
+class vertex:
+    def __init__(self, offset = 0, jumpsize = 0, steps = 0):
+        self.offset = offset
+        self.jumpsize = jumpsize
+        self.steps = steps
 
-G=nx.Graph()
-
-# source: http://stackoverflow.com/questions/1628949/to-find-first-n-prime-numbers-in-python
-def prime(i, primes):
-    for prime in primes:
-        if not (i == prime or i % prime):
-            return False
-    primes.add(i)
-    return i
-
-def get_n_primes(n):
-    primes = set([2])
-    i, p = 2, 0
-    while True:
-        if prime(i, primes):
-            p += 1
-            if p == n:
-                return list(primes)
-        i += 1
-
-# returns the ofset when given Pi and a list of Pml's
-def geto(Pi, lisPm):
-    k = int(Pi * np.prod(lisPm))
-    Pm = 1
-    # in description of oi: oi < Pi and oi mod Pi = 0
-    for Oi in range(0, k, Pi):
-        for Pml in lisPm:
-            if not (Oi % Pml == 1):
-                Pm = Pml
-                break
-        if (Oi % Pm == 1):
-            return Oi
-
-# every DIG vertex is represented as a tuple:
-#           (offset, jumpsize, stepNumber)
-# TODO: Implement offset and stepnumber
-def convert_to_dig( G ):
-    "converts a graph to a dotted interval graph"
-    listOfNodes = G.nodes()
-    listOfEdges = G.edges()
-
-    N = len(listOfNodes)
-    NLisPrime = get_n_primes(N)
-    #NLisPrime = sieve_for_primes_to(N)
-    counter=0
-    
-    # initialize DIG vertex
-    for it in listOfNodes:
-        DIG = []
-        lisOfPm = []
-        p0 = NLisPrime[counter]
-
-        counter2 = 0
-        # keeps track of all primes of vertices it is not connected to
-        for it2 in listOfNodes:
-            if counter2 < counter: break
-            if (G.has_edge(it,it2) or G.has_edge(it2,it)):
-                lisOfPm.append(NLisPrime[counter2])
-            counter2 += 1
-
-        print(lisOfPm)
-        jumpsize = int(p0 * np.prod(lisOfPm))
-        offset = geto(p0, lisOfPm)
+class DIGd:
+    def __init__(self, vertices = [], dtype = None):
+        try:
+            self.max_jump = max(vertices, key = lambda x:x[1])[1]
+        except ValueError:
+            self.max_jump = 0
+        self.dig_type = dtype
+        self.vertices = vertices
         
-        #print("vertex: " + str(it))
-        #print("jumpsize:" + str(jumpsize))
-        #print("offset: " + str(jumpsize))
+    def dig_to_networkX(self):
+        G = nx.Graph()
+        for vertex1, vertex2 in itertools.combinations(self.vertices, 2):
+            G.add_node(vertex1)
+            G.add_node(vertex2)
+            if (((vertex1[0] <= vertex2[0] and 
+                vertex1[0] + vertex1[1]*vertex1[2] >= vertex2[0])
+                or 
+                (vertex2[0] < vertex1[0] and 
+                vertex2[0] + vertex2[1]*vertex2[2] >= vertex1[0]))
+                and 
+                (vertex1[0] - vertex2[0]) % gcd(vertex1[1], vertex2[1]) == 0):
+                print("vertex1, vertex2: " + str(vertex1) + ", " + str(vertex2))
+                G.add_edge(vertex1, vertex2)
+        return G
 
-        DIG.append((offset, jumpsize))
-        counter +=1
-    return DIG
+
+# create a cycle in DIG2 of length n
+# assume a cycle is always of length larger than 0
+def dig_cycle(n):
+    D = DIGd([((0,1,1))], "cycle")
+    if n == 1: return D
+    for num_vertex in range(n-2):
+        D.max_jump = 2
+        D.vertices.append((num_vertex,2,1)) 
+    D.vertices.append((n-2,1,1))
+    return D
+
+#cylce1:
+#[(0, 1, 1)]
+
+#cycle2:
+#[(0,1,1), (0,1,1)]
+
+#cycle3:
+#[(0,1,1), (0,2,1), (1,1,1)]
+
+#cycle4:
+#[(0,1,1), (0,2,1), (1,2,1), (2,1,1)]
+    
