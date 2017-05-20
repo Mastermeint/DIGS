@@ -1,7 +1,0 @@
-\boolfalse {citerequest}\boolfalse {citetracker}\boolfalse {pagetracker}\boolfalse {backtracker}\relax 
-\defcounter {refsection}{0}\relax 
-\select@language {english}
-\defcounter {refsection}{0}\relax 
-\contentsline {chapter}{Introduction}{5}{chapter*.3}
-\defcounter {refsection}{0}\relax 
-\contentsline {chapter}{Summary}{7}{chapter*.4}
