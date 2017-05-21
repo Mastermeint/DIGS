@@ -4,14 +4,19 @@ import matplotlib.pyplot as plt
 from itertools import combinations 
 from fractions import gcd
 from random import randint
+from functools import reduce
 
 #vertex: offset, jumpsize, steps
 class DIGd:
-    def __init__(self, vertices = [], dtype = None):
+    def __init__(self, vertices = [], dtype = None, start = 0, finish = 0):
         try:
             self.max_jump = max(vertices, key = lambda x:x[1])[1]
-        except ValueError:
+            self.start = min( [x[0] for x in vertices]  )
+            self.finish = max([x[0]+(x[1]*x[2]) for x in vertices])
+        except:
             self.max_jump = 0
+            self.start = start
+            self.finish = finish
         self.dig_type = dtype
         self.vertices = vertices
         
@@ -53,6 +58,7 @@ def dig_complete_bipartite(k):
         D.vertices.append((j*k,1,k-1))
     return D
 
+# plot a the graph G, where G had a networkX struc
 def plot_bipartite_graph(G):
    # Separate by group
    l, r = nx.bipartite.sets(G)
@@ -76,4 +82,56 @@ def create_random_dig(tup_int_val, max_jump, num_vertices):
         vertices.append((offset, jump, steps))
     return DIGd(vertices)
 
+# Find least common divisor for reduce function
+def lcm(numbers):
+    """Return lowest common multiple."""    
+    def lcm(a, b):
+        return (a * b) // gcd(a, b)
+    return reduce(lcm, numbers, 1)
 
+# use observations from Optimization problems in DIGs to make sure
+# that the interval of the DIG is in 4*n*lcm(d)
+
+#checks if there are no start of finish points in [i,i+2l(d) -1]
+def reduce_dig(D):
+    ld = lcm([x[1] for x in D.vertices])
+    reduce_count = 0
+    vertex_num = len(D.vertices)
+    for i in range(D.start, D.finish - 2*ld + 1):
+        start_finish_in_intval = False
+        list_of_reduc_vert = [0] * vertex_num
+
+        for index, vertex in enumerate(D.vertices):
+            if (i <= vertex[0] <= (i + 2*ld -1)):
+                if (i <= (vertex[0] + vertex[1]*vertex[2]) <= (i+2*ld -1)):
+                    start_finish_in_intval = True
+                    break
+                else:
+                    list_of_reduc_vert[index] = 1
+                
+        if start_finish_in_intval == True: continue
+        if (D.finish - D.start) - (reduce_count*ld + i) < 0: break
+
+        #reduce current L to L(i) (see D.Hermelin et al.)
+        reduce_count += 1
+        D.vertices = reduce_intval(D.vertices, list_of_reduc_vert, i, ld)
+    return D    
+
+def reduce_intval(vertices, list_of_reduc_vert, i, ld):
+    for index, change_vertex in enumerate(list_of_reduc_vert):
+        if change_vertex:
+            vertex = vertices[index]
+            vertices[index] = (vertex[0], vertex[1], vertex[2] -(ld / vertex[1]))
+    return vertices
+
+# def compact_rep_dig(D):
+#     compact_vertices = []
+#     lcm(
+#     for interval in D.vertices:
+#         
+
+#TODO:
+#       implement observations from D.Hermelin et al.//Optimization problems in DIGs
+#       CLEANUP_FUNCTION:   
+#           sort intervals to offset
+#           
