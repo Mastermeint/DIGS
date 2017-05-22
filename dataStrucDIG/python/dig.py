@@ -40,25 +40,24 @@ class DIGd:
 # create a cycle in DIG2 of length n
 # assume a cycle is always of length larger than 0
 def dig_cycle(n):
-    D = DIGd([(0,1,1)], "cycle")
-    if n == 1: return D
+    vertices = [(0,1,1)]
     for num_vertex in range(n-2):
-        D.max_jump = 2
-        D.vertices.append((num_vertex,2,1)) 
-    D.vertices.append((n-2,1,1))
-    return D
+        vertices.append((num_vertex,2,1)) 
+    vertices.append((n-2,1,1))
+    return DIGd(vertices, "cycle")
 
 # create a complete bipartite graph of size k in DIGk, k>0
 def dig_complete_bipartite(k):
-    D = DIGd([], "cbipartite")
-    D.max_jump = k
-    for i in range(k):
-        D.vertices.append((i,k,k-1))
-    for j in range(k):
-        D.vertices.append((j*k,1,k-1))
-    return D
+    vertices = []
 
-# plot a the graph G, where G had a networkX struc
+    for i in range(k):
+        vertices.append((i, k, k-1))
+    for j in range(k):
+        vertices.append((j*k, 1, k-1))
+
+    return DIGd(vertices, "cbipartite")
+
+# plot a bipartite graph G, where G has a networkX struc
 def plot_bipartite_graph(G):
    # Separate by group
    l, r = nx.bipartite.sets(G)
@@ -75,12 +74,21 @@ def plot_bipartite_graph(G):
 # with maximal jump max_jump containing num_vertices vertices
 def create_random_dig(tup_int_val, max_jump, num_vertices):
     vertices = []
+    intval_start = tup_int_val[0]
+    intval_end = tup_int_val[1]
+
     for i in range(num_vertices):
-        offset = randint(tup_int_val[0], tup_int_val[1])
-        jump = randint(0, min(max_jump,tup_int_val[1]-offset))
-        steps = randint(0, (tup_int_val[1]-offset)//max_jump)
+        offset = randint(intval_start, intval_end)
+        jump = randint(0, min(max_jump,intval_end - offset))
+        steps = randint(0, (intval_end - offset) // max_jump)
         vertices.append((offset, jump, steps))
+
     return DIGd(vertices)
+
+# example graph which can be reduced with reduce_dig()
+def sample():
+    D = DIGd([(1,2,20),(0,2,20),(1,1,4)])
+    return D
 
 # Find least common divisor for reduce function
 def lcm(numbers):
@@ -92,11 +100,6 @@ def lcm(numbers):
 # use observations from Optimization problems in DIGs to make sure
 # that the interval of the DIG is in 4*n*lcm(d)
 
-
-def sample():
-    D = DIGd([(1,2,20),(0,2,20),(1,1,4)])
-    return D
-
 #checks if there are no start of finish points in [i,i+2l(d) -1]
 def reduce_dig(D):
     ld = lcm([x[1] for x in D.vertices])
@@ -106,6 +109,7 @@ def reduce_dig(D):
         start_finish_in_intval = False
         list_of_reduc_vert = [1] * vertex_num
 
+        # check if a start or end point is in the interval
         for index, vertex in enumerate(D.vertices):
             start_vert = vertex[0]
             end_vert = vertex[0] + vertex[1]*vertex[2]
@@ -115,6 +119,7 @@ def reduce_dig(D):
             elif (i <= (end_vert) <= (i+2*ld -1)):
                 start_finish_in_intval = True
                 break
+            # if interval is not in [i,i+2*ld -1] then do nothing
             elif (((start_vert < i) and (end_vert < i))
             or ((start_vert > i+2*ld -1) and (end_vert > i+2*ld))):
                 list_of_reduc_vert[index] = 0
@@ -122,29 +127,23 @@ def reduce_dig(D):
         if start_finish_in_intval == True: 
             continue
         if (D.finish - D.start) - (reduce_count*ld + i) < 0: break
-        print("continue with " + str(list_of_reduc_vert))
 
-        #reduce current L to L(i) (see D.Hermelin et al.)
         reduce_count += 1
         D.vertices = reduce_intval(D.vertices, list_of_reduc_vert, i, ld)
     return D    
 
+# reduce current L to L(i) (see D.Hermelin et al.)
 def reduce_intval(vertices, list_of_reduc_vert, i, ld):
-    print("reduce for i = " + str(i))
     for index, change_vertex in enumerate(list_of_reduc_vert):
         if change_vertex:
-            vertex = vertices[index]
-            vertices[index] = (vertex[0], vertex[1], vertex[2] -(ld // vertex[1]))
+            offset, jump, steps = vertices[index]
+            vertices[index] = (offset, jump, steps - (ld // jump))
     return vertices
 
-# def compact_rep_dig(D):
-#     compact_vertices = []
-#     lcm(
-#     for interval in D.vertices:
-#         
+# TODO:
+# Implement Maximum independent set and vertex cover from
+#    "Optimization problems in dotted interval graphs" - D.Hermelin et al.
+# Implement greedy algorithm for coloring of dotted interval graphs 
+#   with approximation ratio fo (2D +4)/3 from
+#   "Approximation algorithm for coloring of dotted interval graphs" - V.Yanovsky
 
-#TODO:
-#       implement observations from D.Hermelin et al.//Optimization problems in DIGs
-#       CLEANUP_FUNCTION:   
-#           sort intervals to offset
-#           
