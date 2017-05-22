@@ -92,6 +92,11 @@ def lcm(numbers):
 # use observations from Optimization problems in DIGs to make sure
 # that the interval of the DIG is in 4*n*lcm(d)
 
+
+def sample():
+    D = DIGd([(1,2,20),(0,2,20),(1,1,4)])
+    return D
+
 #checks if there are no start of finish points in [i,i+2l(d) -1]
 def reduce_dig(D):
     ld = lcm([x[1] for x in D.vertices])
@@ -99,18 +104,25 @@ def reduce_dig(D):
     vertex_num = len(D.vertices)
     for i in range(D.start, D.finish - 2*ld + 1):
         start_finish_in_intval = False
-        list_of_reduc_vert = [0] * vertex_num
+        list_of_reduc_vert = [1] * vertex_num
 
         for index, vertex in enumerate(D.vertices):
-            if (i <= vertex[0] <= (i + 2*ld -1)):
-                if (i <= (vertex[0] + vertex[1]*vertex[2]) <= (i+2*ld -1)):
-                    start_finish_in_intval = True
-                    break
-                else:
-                    list_of_reduc_vert[index] = 1
+            start_vert = vertex[0]
+            end_vert = vertex[0] + vertex[1]*vertex[2]
+            if (i <= start_vert <= (i + 2*ld -1)):
+                start_finish_in_intval = True
+                break
+            elif (i <= (end_vert) <= (i+2*ld -1)):
+                start_finish_in_intval = True
+                break
+            elif (((start_vert < i) and (end_vert < i))
+            or ((start_vert > i+2*ld -1) and (end_vert > i+2*ld))):
+                list_of_reduc_vert[index] = 0
                 
-        if start_finish_in_intval == True: continue
+        if start_finish_in_intval == True: 
+            continue
         if (D.finish - D.start) - (reduce_count*ld + i) < 0: break
+        print("continue with " + str(list_of_reduc_vert))
 
         #reduce current L to L(i) (see D.Hermelin et al.)
         reduce_count += 1
@@ -118,10 +130,11 @@ def reduce_dig(D):
     return D    
 
 def reduce_intval(vertices, list_of_reduc_vert, i, ld):
+    print("reduce for i = " + str(i))
     for index, change_vertex in enumerate(list_of_reduc_vert):
         if change_vertex:
             vertex = vertices[index]
-            vertices[index] = (vertex[0], vertex[1], vertex[2] -(ld / vertex[1]))
+            vertices[index] = (vertex[0], vertex[1], vertex[2] -(ld // vertex[1]))
     return vertices
 
 # def compact_rep_dig(D):
