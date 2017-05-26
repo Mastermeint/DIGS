@@ -1,3 +1,34 @@
+#!/usr/bin/env python3
+#
+# author: Meinte 
+
+#TODO:
+#   Docstrings              -- check, should be updated
+#   Python Ducktyping
+#   Implement functions:
+#       remove_node()
+#       add_node()
+#       subgraph(nodes)
+#       has_edge(i,j)
+#       edges()
+#       neighbours(i)
+
+"""
+This module represents graphs as Dotted Interval Graphs.
+It is combined with module networkX 
+
+Classes:
+    DIGd
+
+Functions:
+    dig_cycle
+    dig_complete_bipartite
+    plot_bipartite_graph
+    create_random_dig
+    reduce_dig
+"""
+
+
 import networkx as nx
 import matplotlib.pyplot as plt
 
@@ -8,6 +39,21 @@ from functools import reduce
 
 #vertex: offset, jumpsize, steps
 class DIGd:
+    """Dotted interval Graph structure
+   
+    Description:
+    Represents a dotted interval graphs with vertices
+
+    Keywords:
+    max_jump    -- maximam of jumps of all dotted intervals (default 0)
+    start       -- value of position of lowest dot (default 0)
+    finish      -- position of last dot of all intervals (default 0)
+    dig_type    -- type of the DIG (default None)
+    vertices    -- list of all vertices as three tuple (offset, jumpsize, steps) (default [])
+    
+    Functions:
+    dig_to_networkX()   -- converts a DIG to networkX structure in O(n^2) resp. to the vertices n
+    """
     def __init__(self, vertices = [], dtype = None, start = 0, finish = 0):
         try:
             self.max_jump = max(vertices, key = lambda x:x[1])[1]
@@ -40,6 +86,8 @@ class DIGd:
 # create a cycle in DIG2 of length n
 # assume a cycle is always of length larger than 0
 def dig_cycle(n):
+    """Creates a cycle of length n in DIG2 structure"""
+    if n == 0: return DIGd([], None)
     vertices = [(0,1,1)]
     for num_vertex in range(n-2):
         vertices.append((num_vertex,2,1)) 
@@ -48,6 +96,7 @@ def dig_cycle(n):
 
 # create a complete bipartite graph of size k in DIGk, k>0
 def dig_complete_bipartite(k):
+    """Creates a complete bipartite graph of size k in DIGk with k > 0"""
     vertices = []
 
     for i in range(k):
@@ -59,20 +108,28 @@ def dig_complete_bipartite(k):
 
 # plot a bipartite graph G, where G has a networkX struc
 def plot_bipartite_graph(G):
-   # Separate by group
-   l, r = nx.bipartite.sets(G)
-   pos = {}
-   
-   # Update position for node from each group
-   pos.update((node, (1, index)) for index, node in enumerate(l))
-   pos.update((node, (2, index)) for index, node in enumerate(r))
-   
-   nx.draw(G, pos=pos)
-   plt.show()
+    """ plots a bipartite graph from a networkX structure """
+    # Separate by group
+    l, r = nx.bipartite.sets(G)
+    pos = {}
+
+    # Update position for node from each group
+    pos.update((node, (1, index)) for index, node in enumerate(l))
+    pos.update((node, (2, index)) for index, node in enumerate(r))
+
+    nx.draw(G, pos=pos)
+    plt.show()
 
 # create a random dig within interval tup_int_val 
 # with maximal jump max_jump containing num_vertices vertices
 def create_random_dig(tup_int_val, max_jump, num_vertices):
+    """creates a random DIGd
+
+    Keywords:
+    tup_int_val -- expects a 2-tuple "(start, finish)" where DIG is created
+    max_jump    -- maximum jump of every interval
+    num_vertices-- number of vertices (i.e. intervals) to be created within interval
+    """
     vertices = []
     intval_start = tup_int_val[0]
     intval_end = tup_int_val[1]
@@ -102,6 +159,9 @@ def lcm(numbers):
 
 #checks if there are no start of finish points in [i,i+2l(d) -1]
 def reduce_dig(D):
+    """reduces the DIGd interval such that the interval is no longer than 4*n*lcm(D)
+    where n is the number of vertices and lcm is the least common multiplier of all
+    jumps of the intervals in D."""
     ld = lcm([x[1] for x in D.vertices])
     reduce_count = 0
     vertex_num = len(D.vertices)
