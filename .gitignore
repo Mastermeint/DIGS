@@ -1,16 +1,14 @@
 ## Gitignore contributors: remember to update Global/Xcode.gitignore, Objective-C.gitignore & Swift.gitignore
 
-dataStrucDIG/python/__pycache__/*
-dataStrucDIG/python/junk.py
-dataStrucDIG/python/test.edgelist
+dataStrucDIG/junk.py
+dataStrucDIG/test.edgelist
+dataStrucDIG/__pycache__/*
 
 paper/*
 
 ## Build generated
 build/
 DerivedData/
-
-__pycache__/*
 
 ## Various settings
 *.pbxuser
