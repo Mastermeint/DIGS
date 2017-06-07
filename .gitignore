@@ -10,6 +10,8 @@ paper/*
 build/
 DerivedData/
 
+__pycache__/*
+
 ## Various settings
 *.pbxuser
 !default.pbxuser

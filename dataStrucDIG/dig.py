@@ -6,12 +6,7 @@
 #   Docstrings              -- check, should be updated
 #   Python Ducktyping
 #   Implement functions:
-#       remove_node()
-#       add_node()
 #       subgraph(nodes)
-#       has_edge(i,j)
-#       edges()
-#       neighbours(i)
 
 """
 This module represents graphs as Dotted Interval Graphs.
@@ -32,10 +27,10 @@ Functions:
 import networkx as nx
 import matplotlib.pyplot as plt
 
-from itertools import combinations 
 from fractions import gcd
 from random import randint
 from functools import reduce
+
 
 #vertex: offset, jumpsize, steps
 class DIGd:
@@ -53,8 +48,12 @@ class DIGd:
     
     Functions:
     dig_to_networkX()   -- converts a DIG to networkX structure in O(n^2) resp. to the vertices n
+    TODO: 
+        CREATE FUNCTIONS:
+            http://networkx.readthedocs.io/en/networkx-1.11/reference/functions.html
     """
     def __init__(self, vertices = [], dtype = None, start = 0, finish = 0):
+        self.name = 'DIG'
         try:
             self.max_jump = max(vertices, key = lambda x:x[1])[1]
             self.start = min( [x[0] for x in vertices]  )
@@ -65,24 +64,93 @@ class DIGd:
             self.finish = finish
         self.dig_type = dtype
         self.vertices = vertices
+
+    def __getitem__(self, index):
+        return self.vertices[index]
+
+    def __len__(self):
+        return len(self.vertices)
+
+    def nodes_iter(self):
+        for i in range(len(self)):
+            yield i
+
+    def nodes(self):
+        return [i for i in self.nodes_iter()]
+
+    def edges_iter(self):
+        for i in range(len(self)):
+            for j in range(i+1, len(self)):
+                if self.has_edge(i,j):
+                    yield (i, j)
+
+    def edges(self):
+        return [i for i in self.edges_iter()]
+
+    def adjacency_iter(self):
+        for i in range(len(self)):
+            yield (i, {j: {} for j in range(len(self)) if self.has_edge(i,j) and j != i})
+
+    def clear(self):
+        self.vertices = []
+        self.max_jump = 0
+        self.start = 0
+        self.finish = 0
+        self.dig_type = None
+
+    def add_nodes_from(self, lis):
+        self.vertices.extend([(self.finish+i+1, 0, 0) for i in range(len(lis))])
+
+    def add_edges_from(self, lis):
+        pass
+
+    # remove all vertices by index from self.vertices
+    def remove_nodes_from(self, lis):
+        self.vertices = [i for j, i in enumerate(self.vertices) if j not in lis]
+        
+    def remove_edges_from(self):
+        pass
+
+    def has_edge(self, i, j):
+        vertex1 = self[i]
+        vertex2 = self[j]
+
+        if (((vertex1[0] <= vertex2[0] and 
+            vertex1[0] + vertex1[1]*vertex1[2] >= vertex2[0])
+            or 
+            (vertex2[0] < vertex1[0] and 
+            vertex2[0] + vertex2[1]*vertex2[2] >= vertex1[0]))
+            and 
+            (vertex1[0] - vertex2[0]) % gcd(vertex1[1], vertex2[1]) == 0):
+            return True
+        return False
+
+    def is_directed(self):
+        return False
+
+    def is_multigraph(self):
+        return False
+
+    # not sure if this is what the copy function should look like
+    def copy(self):
+        return self
         
     def dig_to_networkX(self):
         G = nx.Graph()
-        for vertex1, vertex2 in combinations(self.vertices, 2):
-            G.add_node(vertex1)
-            G.add_node(vertex2)
-            if (((vertex1[0] <= vertex2[0] and 
-                vertex1[0] + vertex1[1]*vertex1[2] >= vertex2[0])
-                or 
-                (vertex2[0] < vertex1[0] and 
-                vertex2[0] + vertex2[1]*vertex2[2] >= vertex1[0]))
-                and 
-                (vertex1[0] - vertex2[0]) % gcd(vertex1[1], vertex2[1]) == 0):
-                print("vertex1, vertex2: " + str(vertex1) + ", " + str(vertex2))
-                G.add_edge(vertex1, vertex2)
+        for i in range(len(self)):
+            G.add_node(self[i])
+            for j in range(i+1, len(self)):
+                if self.has_edge(i,j):
+                    G.add_edge(self[i],self[j])
         return G
 
-
+    def neighbors(self, i):
+        neighbors = []
+        for j in range(len(self)):
+            if self.has_edge(i,j) and i != j:
+                neighbors.append(self[j])
+        return neighbors
+                
 # create a cycle in DIG2 of length n
 # assume a cycle is always of length larger than 0
 def dig_cycle(n):
@@ -142,10 +210,6 @@ def create_random_dig(tup_int_val, max_jump, num_vertices):
 
     return DIGd(vertices)
 
-# example graph which can be reduced with reduce_dig()
-def sample():
-    D = DIGd([(1,2,20),(0,2,20),(1,1,4)])
-    return D
 
 # Find least common divisor for reduce function
 def lcm(numbers):
@@ -200,10 +264,35 @@ def reduce_intval(vertices, list_of_reduc_vert, i, ld):
             vertices[index] = (offset, jump, steps - (ld // jump))
     return vertices
 
-# TODO:
-# Implement Maximum independent set and vertex cover from
-#    "Optimization problems in dotted interval graphs" - D.Hermelin et al.
-# Implement greedy algorithm for coloring of dotted interval graphs 
-#   with approximation ratio fo (2D +4)/3 from
-#   "Approximation algorithm for coloring of dotted interval graphs" - V.Yanovsky
+def sample():
+    D = DIGd([(1,2,20),(0,2,20),(1,1,4)])
+    return D
+
+if __name__ == "__main__":
+    print("compiled")
+    D = sample()
+    print("graph consists of ")
+    print(D.vertices)
+    print(" ")
+    print("vertex ", 1, "has tuple ", D[1])
+    print('and neighbors ', D.neighbors(1))
+    print(" ")
+    print("grafenstructuur in networkx:")
+    #G = D.dig_to_networkX()
+    print("de vertices zijn: ", D.dig_to_networkX().nodes())
+    print("met edges: ", D.dig_to_networkX().edges())
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
