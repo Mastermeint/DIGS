@@ -1,8 +1,9 @@
 ## Gitignore contributors: remember to update Global/Xcode.gitignore, Objective-C.gitignore & Swift.gitignore
 
-dataStrucDIG/junk.py
 dataStrucDIG/test.edgelist
 dataStrucDIG/__pycache__/*
+dataStrucDIG/dig.pyc
+dataStrucDIG/graphcalls.py
 
 paper/*
 

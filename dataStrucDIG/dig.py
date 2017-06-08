@@ -2,11 +2,6 @@
 #
 # author: Meinte 
 
-#TODO:
-#   Docstrings              -- check, should be updated
-#   Python Ducktyping
-#   Implement functions:
-#       subgraph(nodes)
 
 """
 This module represents graphs as Dotted Interval Graphs.
@@ -30,6 +25,7 @@ import matplotlib.pyplot as plt
 from fractions import gcd
 from random import randint
 from functools import reduce
+from itertools import combinations
 
 
 #vertex: offset, jumpsize, steps
@@ -48,9 +44,29 @@ class DIGd:
     
     Functions:
     dig_to_networkX()   -- converts a DIG to networkX structure in O(n^2) resp. to the vertices n
-    TODO: 
-        CREATE FUNCTIONS:
-            http://networkx.readthedocs.io/en/networkx-1.11/reference/functions.html
+    nodes_iter()
+    number_of_nodes()
+    edges_iter()
+    edges()
+    number_of_edges()
+    size()
+    non_edges()
+    adjacency_iter()
+    clear()
+    add_nodes_from(nodes)
+    add_edges_from(nodes)
+    remove_nodes_from(nodes)
+    remove_edges_from(node)
+    has_edge(i,j)
+    is_directed()
+    is_multigraph()
+    copy()
+    dig_to_networkX()
+    neighbors_iter(node)
+    neighbors(node)
+    degree(node)
+    degree_iter(node)
+    subgraph(nodes)
     """
     def __init__(self, vertices = [], dtype = None, start = 0, finish = 0):
         self.name = 'DIG'
@@ -63,57 +79,97 @@ class DIGd:
             self.start = start
             self.finish = finish
         self.dig_type = dtype
-        self.vertices = vertices
+        self.vertices = {i:vertices[i] for i in range(len(vertices))}
 
+    # Beetje hacky, maar het werkt
     def __getitem__(self, index):
-        return self.vertices[index]
+        return list(self.vertices.keys())[index]
+
+    def __iter__(self):
+        for key in self.vertices:
+            yield key
 
     def __len__(self):
+        """defines length of object by number of vertices"""
         return len(self.vertices)
 
+    def __contains__(self, n):
+        try:
+            return n in self.node
+        except TypeError:
+            return False
+
     def nodes_iter(self):
-        for i in range(len(self)):
+        """iterator over nodes"""
+        for i in self.vertices.keys():
             yield i
 
     def nodes(self):
+        """Return list of nodes"""
         return [i for i in self.nodes_iter()]
 
+    def number_of_nodes(self):
+        """Returns number of nodes"""
+        return len(self.nodes())
+
     def edges_iter(self):
+        """iterator over edges"""
         for i in range(len(self)):
             for j in range(i+1, len(self)):
                 if self.has_edge(i,j):
                     yield (i, j)
 
     def edges(self):
+        """Return list of edges"""
         return [i for i in self.edges_iter()]
 
+    def number_of_edges(self):
+        """returns number of edges"""
+        return len(self.edges())
+
+    def size(self):
+        return self.number_of_edges()
+
+    def non_edges(self):
+        """Returns list of all non-existant edges"""
+        all_edges = [(i,j) for i, j in combinations(self.nodes(), 2)]
+        return [edge for edge in all_edges if edge not in self.edges()]
+
     def adjacency_iter(self):
+        """Return an iterator of (node, adjacency dict) tuples for all nodes."""
         for i in range(len(self)):
             yield (i, {j: {} for j in range(len(self)) if self.has_edge(i,j) and j != i})
 
     def clear(self):
-        self.vertices = []
+        """sets all properties to default"""
+        self.vertices = {}
         self.max_jump = 0
         self.start = 0
         self.finish = 0
         self.dig_type = None
 
-    def add_nodes_from(self, lis):
-        self.vertices.extend([(self.finish+i+1, 0, 0) for i in range(len(lis))])
+    def add_nodes_from(self, nodes):
+        """adds singletons after finish"""
+        self.vertices.update({i+d[-1]:(self.finish+i+1, 0, 0) for i in range(len(nodes))})
 
     def add_edges_from(self, lis):
+        """defined with pass"""
         pass
 
     # remove all vertices by index from self.vertices
-    def remove_nodes_from(self, lis):
-        self.vertices = [i for j, i in enumerate(self.vertices) if j not in lis]
+    def remove_nodes_from(self, nodes):
+        """removes nodes listed"""
+        for i in nodes:
+            del self.vertices[i]
         
     def remove_edges_from(self):
+        """defined with pass"""
         pass
 
     def has_edge(self, i, j):
-        vertex1 = self[i]
-        vertex2 = self[j]
+        """returns True if node i is connected to node j"""
+        vertex1 = self.vertices[i]
+        vertex2 = self.vertices[j]
 
         if (((vertex1[0] <= vertex2[0] and 
             vertex1[0] + vertex1[1]*vertex1[2] >= vertex2[0])
@@ -126,16 +182,20 @@ class DIGd:
         return False
 
     def is_directed(self):
+        """returns False since DIGs are no directedgraphs"""
         return False
 
     def is_multigraph(self):
+        """returns False since DIGs are no multigraphs"""
         return False
 
     # not sure if this is what the copy function should look like
     def copy(self):
+        """returns a copy of the object"""
         return self
         
     def dig_to_networkX(self):
+        """converts DIGd struc to networkx struc"""
         G = nx.Graph()
         for i in range(len(self)):
             G.add_node(self[i])
@@ -144,12 +204,27 @@ class DIGd:
                     G.add_edge(self[i],self[j])
         return G
 
-    def neighbors(self, i):
+    def neighbors_iter(self, i):
+        """returns al list of all nodes directly connected to node i """
         neighbors = []
-        for j in range(len(self)):
+        for j in self.nodes():
             if self.has_edge(i,j) and i != j:
-                neighbors.append(self[j])
-        return neighbors
+                yield (i, j)
+
+    def neighbors(self, i):
+        """returns al list of all nodes directly connected to node i """
+        return [neigh for neigh in self.neighbors_iter(i)]
+
+    def degree(self, node):
+        return len(self.neighbors)
+
+    def degree_iter(self, node):
+        for n in self.nodes():
+            yield (n, neighbors)
+
+    def subgraph(self, nodes):
+        """Returns a subgraph consisting of the list of nodes given """
+        return DIGd([i for j, i in enumerate(self.vertices) if j in nodes])
                 
 # create a cycle in DIG2 of length n
 # assume a cycle is always of length larger than 0
@@ -191,7 +266,7 @@ def plot_bipartite_graph(G):
 # create a random dig within interval tup_int_val 
 # with maximal jump max_jump containing num_vertices vertices
 def create_random_dig(tup_int_val, max_jump, num_vertices):
-    """creates a random DIGd
+    """returns a random DIGd graph
 
     Keywords:
     tup_int_val -- expects a 2-tuple "(start, finish)" where DIG is created
@@ -271,6 +346,7 @@ def sample():
 if __name__ == "__main__":
     print("compiled")
     D = sample()
+    d = DIGd([(1,2,3),(2,3,4),(1,1,3),(0,2,5)])
     print("graph consists of ")
     print(D.vertices)
     print(" ")
@@ -281,18 +357,8 @@ if __name__ == "__main__":
     #G = D.dig_to_networkX()
     print("de vertices zijn: ", D.dig_to_networkX().nodes())
     print("met edges: ", D.dig_to_networkX().edges())
-
-
-
-
-
-
-
-
-
-
-
-
+    print("++++++")
+    nx.draw(d, pos=nx.spring_layout(d))
 
 
 
