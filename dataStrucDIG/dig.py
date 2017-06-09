@@ -28,6 +28,8 @@ from functools import reduce
 from itertools import combinations
 
 
+# convert vertices to dictionary
+
 #vertex: offset, jumpsize, steps
 class DIGd:
     """Dotted interval Graph structure
@@ -79,7 +81,17 @@ class DIGd:
             self.start = start
             self.finish = finish
         self.dig_type = dtype
-        self.vertices = {i:vertices[i] for i in range(len(vertices))}
+        self.vertices = {}
+        if type(vertices) == list:
+            count = 0
+            for vertex in vertices:
+                vertex = {"offset": vertex[0], "jump": vertex[1], "steps": vertex[2]}
+                self.vertices.update({count: vertex})
+                count += 1
+        elif type(vertices) == dict:
+            self.vertices = {i:vertices[i] for i in range(len(vertices))}
+        else:
+            raise TypeError ("vertices not of type dict or list")
 
     # Beetje hacky, maar het werkt
     def __getitem__(self, index):
@@ -148,13 +160,37 @@ class DIGd:
         self.finish = 0
         self.dig_type = None
 
+    def add_node(self, label):
+        """Adds a single node,
+
+        Arguments:
+            label --    can be a string, then a disjunct node will be added
+                        can be a dictionary, then a dotted interval will be added"""
+        try:
+            if all (k in label for k in ("offset", "jump","steps")):
+                if "name" in label:
+                    self.vertices[label["name"]] = {"offset": label["offset"],
+                                                    "jump": label["jump"],
+                                                    "steps": label["steps"]}
+                else:
+                    raise TypeError ("name not in dictionary")
+            elif type(label) == str:
+                self.vertices[label] = {"offset":self.finish+1,
+                                        "jump" : 0,
+                                        "steps" : 0}
+            self.finish += 1
+        except:
+            raise TypeError ("node not of format dict with keys offset, jump, steps, "
+                              "or not of gormat string")
+                    
     def add_nodes_from(self, nodes):
         """adds singletons after finish"""
-        self.vertices.update({i+d[-1]:(self.finish+i+1, 0, 0) for i in range(len(nodes))})
+        for node in nodes:
+            self.add_node(node)
 
     def add_edges_from(self, lis):
         """defined with pass"""
-        pass
+        raise NotImplementedError
 
     # remove all vertices by index from self.vertices
     def remove_nodes_from(self, nodes):
@@ -164,20 +200,29 @@ class DIGd:
         
     def remove_edges_from(self):
         """defined with pass"""
-        pass
+        raise NotImplementedError
 
     def has_edge(self, i, j):
         """returns True if node i is connected to node j"""
+        offset1 = self[i]['offset']
+        offset2 = self[j]['offset']
+
+        jump1 = self[i]['jump']
+        jump2 = self[j]['jump']
+
+        steps1 = self[i]['steps']
+        steps2 = self[j]['steps']
+        
         vertex1 = self.vertices[i]
         vertex2 = self.vertices[j]
 
-        if (((vertex1[0] <= vertex2[0] and 
-            vertex1[0] + vertex1[1]*vertex1[2] >= vertex2[0])
+        if (((offset1 <= offset2 and 
+            offset1 + jump1*steps1 >= offset2)
             or 
-            (vertex2[0] < vertex1[0] and 
-            vertex2[0] + vertex2[1]*vertex2[2] >= vertex1[0]))
-            and 
-            (vertex1[0] - vertex2[0]) % gcd(vertex1[1], vertex2[1]) == 0):
+            (offset2 < offset1 and
+            offset2 + jump2*steps2 >= offset1))
+            and
+            (offset1 - offset2) % gcd(jump1, jump2) == 0):
             return True
         return False
 
@@ -192,7 +237,7 @@ class DIGd:
     # not sure if this is what the copy function should look like
     def copy(self):
         """returns a copy of the object"""
-        return self
+        return DIGd(self.vertices)
         
     def dig_to_networkX(self):
         """converts DIGd struc to networkx struc"""
@@ -225,6 +270,15 @@ class DIGd:
     def subgraph(self, nodes):
         """Returns a subgraph consisting of the list of nodes given """
         return DIGd([i for j, i in enumerate(self.vertices) if j in nodes])
+
+#     def nbunch_iter(self, nbunch):
+#         for node in nbunch:
+#             yield node
+#         def bunch_iter
+#         try:
+#                             for n in nlist:
+#                                                     if n in adj:
+#                                                                                yield n
                 
 # create a cycle in DIG2 of length n
 # assume a cycle is always of length larger than 0
