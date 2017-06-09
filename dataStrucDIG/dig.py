@@ -71,7 +71,7 @@ class DIGd:
     subgraph(nodes)
     """
     def __init__(self, vertices = [], dtype = None, start = 0, finish = 0):
-        self.name = 'DIG'
+        self.graph = {}
         try:
             self.max_jump = max(vertices, key = lambda x:x[1])[1]
             self.start = min( [x[0] for x in vertices]  )
@@ -110,6 +110,15 @@ class DIGd:
             return n in self.node
         except TypeError:
             return False
+
+    def name(self):
+        return self.graph.get('name', '')
+
+    def name(self, s):
+        self.graph['name']=s
+
+    def __str__(self):
+        return self.name
 
     def nodes_iter(self):
         """iterator over nodes"""
@@ -271,14 +280,36 @@ class DIGd:
         """Returns a subgraph consisting of the list of nodes given """
         return DIGd([i for j, i in enumerate(self.vertices) if j in nodes])
 
-#     def nbunch_iter(self, nbunch):
-#         for node in nbunch:
-#             yield node
-#         def bunch_iter
-#         try:
-#                             for n in nlist:
-#                                                     if n in adj:
-#                                                                                yield n
+    def nbunch_iter(self, nbunch=None):
+        if nbunch is None:   # include all nodes via iterator
+            bunch=iter(self.adj.keys())
+        elif nbunch in self: # if nbunch is a single node
+            bunch=iter([nbunch])
+        for node in nbunch:
+            yield node
+        def bunch_iter:
+            try:
+                for n in nlist:
+                    if n in adj:
+                       yield n
+            except:
+                TypeError as e:
+                    message=e.args[0]
+                    import sys
+                    sys.stdout.write(message)
+                    # capture error for non-sequence/iterator nbunch.
+                    if 'iter' in message:
+                        raise NetworkXError(\
+                            "nbunch is not a node or a sequence of nodes.")
+
+                    # capture error for unhashable node.
+                    elif 'hashable' in message:
+                        raise NetworkXError(\
+                            "Node %s in the sequence nbunch is not a valid node."%n)
+                    else:
+                        raise
+                bunch=bunch_iter(nbunch,self.adj)
+            return bunch
                 
 # create a cycle in DIG2 of length n
 # assume a cycle is always of length larger than 0
