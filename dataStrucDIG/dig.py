@@ -26,6 +26,7 @@ from fractions import gcd
 from random import randint
 from functools import reduce
 from itertools import combinations
+from copy import deepcopy
 
 
 # convert vertices to dictionary
@@ -95,11 +96,11 @@ class DIGd:
 
     # Beetje hacky, maar het werkt
     def __getitem__(self, index):
-        return list(self.vertices.keys())[index]
+        return self.vertices[index]
 
     def __iter__(self):
-        for key in self.vertices:
-            yield key
+        for obj in self.vertices:
+            yield obj
 
     def __len__(self):
         """defines length of object by number of vertices"""
@@ -183,7 +184,7 @@ class DIGd:
                                                     "steps": label["steps"]}
                 else:
                     raise TypeError ("name not in dictionary")
-            elif type(label) == str:
+            elif (type(label) == str) or (type(label) == int):
                 self.vertices[label] = {"offset":self.finish+1,
                                         "jump" : 0,
                                         "steps" : 0}
@@ -225,6 +226,9 @@ class DIGd:
         vertex1 = self.vertices[i]
         vertex2 = self.vertices[j]
 
+        if jump1 == 0 and jump2 == 0:
+            return False
+
         if (((offset1 <= offset2 and 
             offset1 + jump1*steps1 >= offset2)
             or 
@@ -246,7 +250,7 @@ class DIGd:
     # not sure if this is what the copy function should look like
     def copy(self):
         """returns a copy of the object"""
-        return DIGd(self.vertices)
+        return deepcopy(self)
         
     def dig_to_networkX(self):
         """converts DIGd struc to networkx struc"""
@@ -280,40 +284,40 @@ class DIGd:
         """Returns a subgraph consisting of the list of nodes given """
         return DIGd([i for j, i in enumerate(self.vertices) if j in nodes])
 
-    def nbunch_iter(self, nbunch=None):
-        if nbunch is None:   # include all nodes via iterator
-            bunch=iter(self.adj.keys())
-        elif nbunch in self: # if nbunch is a single node
-            bunch=iter([nbunch])
-        for node in nbunch:
-            yield node
-        def bunch_iter:
-            try:
-                for n in nlist:
-                    if n in adj:
-                       yield n
-            except:
-                TypeError as e:
-                    message=e.args[0]
-                    import sys
-                    sys.stdout.write(message)
-                    # capture error for non-sequence/iterator nbunch.
-                    if 'iter' in message:
-                        raise NetworkXError(\
-                            "nbunch is not a node or a sequence of nodes.")
-
-                    # capture error for unhashable node.
-                    elif 'hashable' in message:
-                        raise NetworkXError(\
-                            "Node %s in the sequence nbunch is not a valid node."%n)
-                    else:
-                        raise
-                bunch=bunch_iter(nbunch,self.adj)
-            return bunch
+# def nbunch_iter(self, nbunch=None):
+#         if nbunch is None:   # include all nodes via iterator
+#             bunch=iter(self.adj.keys())
+#         elif nbunch in self: # if nbunch is a single node
+#             bunch=iter([nbunch])
+#         for node in nbunch:
+#             yield node
+#         def bunch_iter:
+#             try:
+#                 for n in nlist:
+#                     if n in adj:
+#                        yield n
+#             except:
+#                 TypeError as e:
+#                     message=e.args[0]
+#                     import sys
+#                     sys.stdout.write(message)
+#                     # capture error for non-sequence/iterator nbunch.
+#                     if 'iter' in message:
+#                         raise NetworkXError(\
+#                             "nbunch is not a node or a sequence of nodes.")
+# 
+#                     # capture error for unhashable node.
+#                     elif 'hashable' in message:
+#                         raise NetworkXError(\
+#                             "Node %s in the sequence nbunch is not a valid node."%n)
+#                     else:
+#                         raise
+#                 bunch=bunch_iter(nbunch,self.adj)
+#             return bunch
                 
 # create a cycle in DIG2 of length n
 # assume a cycle is always of length larger than 0
-def dig_cycle(n):
+def create_cycle(n):
     """Creates a cycle of length n in DIG2 structure"""
     if n == 0: return DIGd([], None)
     vertices = [(0,1,1)]
@@ -323,7 +327,7 @@ def dig_cycle(n):
     return DIGd(vertices, "cycle")
 
 # create a complete bipartite graph of size k in DIGk, k>0
-def dig_complete_bipartite(k):
+def create_complete_bipartite(k):
     """Creates a complete bipartite graph of size k in DIGk with k > 0"""
     vertices = []
 
@@ -358,7 +362,7 @@ def create_random_dig(tup_int_val, max_jump, num_vertices):
     max_jump    -- maximum jump of every interval
     num_vertices-- number of vertices (i.e. intervals) to be created within interval
     """
-    vertices = []
+    vertices = {}
     intval_start = tup_int_val[0]
     intval_end = tup_int_val[1]
 
@@ -366,7 +370,10 @@ def create_random_dig(tup_int_val, max_jump, num_vertices):
         offset = randint(intval_start, intval_end)
         jump = randint(0, min(max_jump,intval_end - offset))
         steps = randint(0, (intval_end - offset) // max_jump)
-        vertices.append((offset, jump, steps))
+        
+        vertices[i] = {"offset": offset,
+                        "jump": jump,
+                        "steps": steps} #.update((offset, jump, steps))
 
     return DIGd(vertices)
 
@@ -429,21 +436,33 @@ def sample():
     return D
 
 if __name__ == "__main__":
-    print("compiled")
-    D = sample()
-    d = DIGd([(1,2,3),(2,3,4),(1,1,3),(0,2,5)])
+    print("create a cycle of 4")
+    d = create_cycle(4)
     print("graph consists of ")
-    print(D.vertices)
+    print(d.vertices)
     print(" ")
-    print("vertex ", 1, "has tuple ", D[1])
-    print('and neighbors ', D.neighbors(1))
     print(" ")
-    print("grafenstructuur in networkx:")
-    #G = D.dig_to_networkX()
-    print("de vertices zijn: ", D.dig_to_networkX().nodes())
-    print("met edges: ", D.dig_to_networkX().edges())
-    print("++++++")
-    nx.draw(d, pos=nx.spring_layout(d))
+    print("create a complete bipartite graph of degree 3:")
+    b = create_complete_bipartite(3)
+    print("graph consists of ")
+    print(b.vertices)
+    print(" ")
+    print(" ")
+    print("create a random graph in interval [0,20] with max jump 3 and maximum steps 10:")
+    r = create_random_dig((0,20), 3, 10)
+    print("graph consists of ")
+    print(r.vertices)
+    print(" ")
+    print(" ")
+    print("plotting graphs:")
+    print("blue for cycle, green for bipartite and red for random")
+    plt.figure(1)
+    nx.draw(d, node_color='b')
+    plt.figure(2)
+    nx.draw(b, node_color='g')
+    plt.figure(3)
+    nx.draw(r, node_color='r')
+    plt.show()
 
 
 
