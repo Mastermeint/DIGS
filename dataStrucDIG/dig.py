@@ -73,14 +73,6 @@ class DIGd:
     """
     def __init__(self, vertices = [], dtype = None, start = 0, finish = 0):
         self.graph = {}
-        try:
-            self.max_jump = max(vertices, key = lambda x:x[1])[1]
-            self.start = min( [x[0] for x in vertices]  )
-            self.finish = max([x[0]+(x[1]*x[2]) for x in vertices])
-        except:
-            self.max_jump = 0
-            self.start = start
-            self.finish = finish
         self.dig_type = dtype
         self.vertices = {}
         if type(vertices) == list:
@@ -94,9 +86,16 @@ class DIGd:
         else:
             raise TypeError ("vertices not of type dict or list")
 
-    # Beetje hacky, maar het werkt
-    def __getitem__(self, index):
-        return self.vertices[index]
+        try:
+            self.max_jump = max( x['jump'] for k,x in self.vertices.items() )
+            self.start = min( x['offset'] for k,x in self.vertices.items() )
+            self.finish = max( x['offset'] + (x['jump']*x['steps']) for k,x in self.vertices.items() )
+        except:
+            self.max_jump = 0
+            self.start = start
+            self.finish = finish
+        self.node = self.vertices
+
 
     def __iter__(self):
         for obj in self.vertices:
@@ -134,20 +133,68 @@ class DIGd:
         """Returns number of nodes"""
         return len(self.nodes())
 
-    def edges_iter(self):
-        """iterator over edges"""
-        for i in range(len(self)):
-            for j in range(i+1, len(self)):
-                if self.has_edge(i,j):
-                    yield (i, j)
+    def has_edge(self, i, j):
+        """returns True if node i is connected to node j"""
+        if i == j:
+            return False
 
-    def edges(self):
+        offset1 = self.vertices[i]['offset']
+        offset2 = self.vertices[j]['offset']
+
+        jump1 = self.vertices[i]['jump']
+        jump2 = self.vertices[j]['jump']
+
+        steps1 = self.vertices[i]['steps']
+        steps2 = self.vertices[j]['steps']
+
+        if jump1 == 0 and jump2 == 0:
+            return False
+
+        if (((offset1 <= offset2 and 
+            offset1 + jump1*steps1 >= offset2)
+            or 
+            (offset2 < offset1 and
+            offset2 + jump2*steps2 >= offset1))
+            and
+            (offset1 - offset2) % gcd(jump1, jump2) == 0):
+            return True
+        return False
+
+    def edges_iter(self, nbunch=None):
+        """iterator over edges"""
+        if nbunch is None:
+            for i, j in combinations(self.vertices, 2):
+                if self.has_edge(i,j):
+                    yield (i,j)
+        elif type(nbunch == int) or type(nbunch == str):
+            for i in self.nodes():
+                if self.has_edge(nbunch, i):
+                    yield (i,nbunch)
+        else:
+            for i in nbunch:
+                for j in self.nodes():
+                    if self.has_edge(i,j):
+                        yield (i,j)
+            
+
+    def edges(self, nbunch=None):
         """Return list of edges"""
-        return [i for i in self.edges_iter()]
+        return [i for i in self.edges_iter(nbunch)]
 
     def number_of_edges(self):
         """returns number of edges"""
         return len(self.edges())
+
+    def __getitem__(self, index):
+        item = {}
+        for v1, v2 in self.edges(index):
+                if v1 == index:
+                    item.update({v2:{}})
+                elif v2 == index:
+                    item.update({v1:{}})
+                else:
+                    raise ValueError("something went wrong in getitem")
+        return item
 
     def size(self):
         return self.number_of_edges()
@@ -212,33 +259,6 @@ class DIGd:
         """defined with pass"""
         raise NotImplementedError
 
-    def has_edge(self, i, j):
-        """returns True if node i is connected to node j"""
-        offset1 = self[i]['offset']
-        offset2 = self[j]['offset']
-
-        jump1 = self[i]['jump']
-        jump2 = self[j]['jump']
-
-        steps1 = self[i]['steps']
-        steps2 = self[j]['steps']
-        
-        vertex1 = self.vertices[i]
-        vertex2 = self.vertices[j]
-
-        if jump1 == 0 and jump2 == 0:
-            return False
-
-        if (((offset1 <= offset2 and 
-            offset1 + jump1*steps1 >= offset2)
-            or 
-            (offset2 < offset1 and
-            offset2 + jump2*steps2 >= offset1))
-            and
-            (offset1 - offset2) % gcd(jump1, jump2) == 0):
-            return True
-        return False
-
     def is_directed(self):
         """returns False since DIGs are no directedgraphs"""
         return False
@@ -267,54 +287,32 @@ class DIGd:
         neighbors = []
         for j in self.nodes():
             if self.has_edge(i,j) and i != j:
-                yield (i, j)
+                yield j
 
     def neighbors(self, i):
         """returns al list of all nodes directly connected to node i """
         return [neigh for neigh in self.neighbors_iter(i)]
 
     def degree(self, node):
-        return len(self.neighbors)
+        return len(self.neighbors(node))
 
     def degree_iter(self, node):
-        for n in self.nodes():
-            yield (n, neighbors)
+        if type(node) == str or type(node) == int:
+            for neighbors in self.neighbors_iter(node):
+                yield (node, self.degree(neighbors))
+        elif type(node) == list:
+            for vertex in node:
+                for neighbors in self.neighbors_iter(vertex):
+                    yield (vertex, self.degree(neighbors))
+        else:
+            raise TypeError("node of wrong type")
+                
 
     def subgraph(self, nodes):
         """Returns a subgraph consisting of the list of nodes given """
         return DIGd([i for j, i in enumerate(self.vertices) if j in nodes])
 
-# def nbunch_iter(self, nbunch=None):
-#         if nbunch is None:   # include all nodes via iterator
-#             bunch=iter(self.adj.keys())
-#         elif nbunch in self: # if nbunch is a single node
-#             bunch=iter([nbunch])
-#         for node in nbunch:
-#             yield node
-#         def bunch_iter:
-#             try:
-#                 for n in nlist:
-#                     if n in adj:
-#                        yield n
-#             except:
-#                 TypeError as e:
-#                     message=e.args[0]
-#                     import sys
-#                     sys.stdout.write(message)
-#                     # capture error for non-sequence/iterator nbunch.
-#                     if 'iter' in message:
-#                         raise NetworkXError(\
-#                             "nbunch is not a node or a sequence of nodes.")
-# 
-#                     # capture error for unhashable node.
-#                     elif 'hashable' in message:
-#                         raise NetworkXError(\
-#                             "Node %s in the sequence nbunch is not a valid node."%n)
-#                     else:
-#                         raise
-#                 bunch=bunch_iter(nbunch,self.adj)
-#             return bunch
-                
+
 # create a cycle in DIG2 of length n
 # assume a cycle is always of length larger than 0
 def create_cycle(n):
@@ -388,22 +386,32 @@ def lcm(numbers):
 # use observations from Optimization problems in DIGs to make sure
 # that the interval of the DIG is in 4*n*lcm(d)
 
+#vertex: offset, jumpsize, steps
+
 #checks if there are no start of finish points in [i,i+2l(d) -1]
 def reduce_dig(D):
     """reduces the DIGd interval such that the interval is no longer than 4*n*lcm(D)
     where n is the number of vertices and lcm is the least common multiplier of all
     jumps of the intervals in D."""
-    ld = lcm([x[1] for x in D.vertices])
+    vertices = D.vertices
+    ld = lcm([subdic['jump'] for k, subdic in vertices.items()])
     reduce_count = 0
     vertex_num = len(D.vertices)
+    
     for i in range(D.start, D.finish - 2*ld + 1):
         start_finish_in_intval = False
-        list_of_reduc_vert = [1] * vertex_num
+        dic_of_reduc_vert = {}
 
         # check if a start or end point is in the interval
-        for index, vertex in enumerate(D.vertices):
-            start_vert = vertex[0]
-            end_vert = vertex[0] + vertex[1]*vertex[2]
+        for key, vertex in vertices.items():
+            dic_of_reduc_vert[key] = {1}
+            offset = vertex['offset']
+            jump = vertex['jump']
+            steps = vertex['steps']
+
+            start_vert = offset 
+            end_vert = offset + jump*steps
+
             if (i <= start_vert <= (i + 2*ld -1)):
                 start_finish_in_intval = True
                 break
@@ -413,22 +421,26 @@ def reduce_dig(D):
             # if interval is not in [i,i+2*ld -1] then do nothing
             elif (((start_vert < i) and (end_vert < i))
             or ((start_vert > i+2*ld -1) and (end_vert > i+2*ld))):
-                list_of_reduc_vert[index] = 0
+                dic_of_reduc_vert[key] = 0
                 
         if start_finish_in_intval == True: 
             continue
         if (D.finish - D.start) - (reduce_count*ld + i) < 0: break
 
         reduce_count += 1
-        D.vertices = reduce_intval(D.vertices, list_of_reduc_vert, i, ld)
-    return D    
+        vertices = reduce_intval(vertices, dic_of_reduc_vert, i, ld)
+    return DIGd(vertices)    
 
 # reduce current L to L(i) (see D.Hermelin et al.)
-def reduce_intval(vertices, list_of_reduc_vert, i, ld):
-    for index, change_vertex in enumerate(list_of_reduc_vert):
+def reduce_intval(vertices, dic_of_reduc_vert, i, ld):
+    for key, change_vertex in dic_of_reduc_vert.items():
         if change_vertex:
-            offset, jump, steps = vertices[index]
-            vertices[index] = (offset, jump, steps - (ld // jump))
+            offset = vertices[key]['offset']
+            jump = vertices[key]['jump']
+            steps = vertices[key]['steps']
+
+            vertices[key] = {'offset': offset, 'jump': jump, 'steps': steps-(ld//jump)}
+            #vertices[index] = (offset, jump, steps - (ld // jump))
     return vertices
 
 def sample():
@@ -436,33 +448,12 @@ def sample():
     return D
 
 if __name__ == "__main__":
-    print("create a cycle of 4")
-    d = create_cycle(4)
-    print("graph consists of ")
-    print(d.vertices)
-    print(" ")
-    print(" ")
-    print("create a complete bipartite graph of degree 3:")
-    b = create_complete_bipartite(3)
-    print("graph consists of ")
-    print(b.vertices)
-    print(" ")
-    print(" ")
-    print("create a random graph in interval [0,20] with max jump 3 and maximum steps 10:")
-    r = create_random_dig((0,20), 3, 10)
-    print("graph consists of ")
-    print(r.vertices)
-    print(" ")
-    print(" ")
-    print("plotting graphs:")
-    print("blue for cycle, green for bipartite and red for random")
-    plt.figure(1)
-    nx.draw(d, node_color='b')
-    plt.figure(2)
-    nx.draw(b, node_color='g')
-    plt.figure(3)
-    nx.draw(r, node_color='r')
-    plt.show()
+    d = create_random_dig((0,100), 3, 30) 
+    print("density of d: " + str(nx.density(d)))
+    print("coloring of d: ")
+    print(nx.coloring.greedy_color(d))
+    print("maximal_matching of d: ")
+    print(nx.matching.maximal_matching(d))
 
 
 
