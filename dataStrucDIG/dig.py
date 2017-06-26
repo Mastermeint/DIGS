@@ -21,6 +21,7 @@ Functions:
 
 import networkx as nx
 import matplotlib.pyplot as plt
+import six
 
 from fractions import gcd
 from random import randint
@@ -82,10 +83,12 @@ class DIGd:
                 self.vertices.update({count: vertex})
                 count += 1
         elif type(vertices) == dict:
-            self.vertices = {i:vertices[i] for i in range(len(vertices))}
+            if type(six.next(six.itervalues(vertices))) == dict:
+                self.vertices = vertices
+            else:
+                self.vertices = {i:vertices[i] for i in range(len(vertices))}
         else:
             raise TypeError ("vertices not of type dict or list")
-
         try:
             self.max_jump = max( x['jump'] for k,x in self.vertices.items() )
             self.start = min( x['offset'] for k,x in self.vertices.items() )
@@ -147,8 +150,11 @@ class DIGd:
         steps1 = self.vertices[i]['steps']
         steps2 = self.vertices[j]['steps']
 
-        if jump1 == 0 and jump2 == 0:
-            return False
+        if (jump1 == 0 and jump2 == 0):
+            if (offset1 != offset2):
+                return False
+            else:
+                return True
 
         if (((offset1 <= offset2 and 
             offset1 + jump1*steps1 >= offset2)
@@ -175,7 +181,6 @@ class DIGd:
                 for j in self.nodes():
                     if self.has_edge(i,j):
                         yield (i,j)
-            
 
     def edges(self, nbunch=None):
         """Return list of edges"""
@@ -267,7 +272,6 @@ class DIGd:
         """returns False since DIGs are no multigraphs"""
         return False
 
-    # not sure if this is what the copy function should look like
     def copy(self):
         """returns a copy of the object"""
         return deepcopy(self)
@@ -306,12 +310,56 @@ class DIGd:
                     yield (vertex, self.degree(neighbors))
         else:
             raise TypeError("node of wrong type")
-                
 
     def subgraph(self, nodes):
         """Returns a subgraph consisting of the list of nodes given """
-        return DIGd([i for j, i in enumerate(self.vertices) if j in nodes])
+        subgraph = {}
+        if type(nodes) == str or type(nodes) == int:
+            subgraph[nodes] = self.vertices[nodes]
+        elif type(nodes) == list:
+            for node in nodes:
+                subgraph[node] = self.vertices[node]
+        else:
+            raise TypeError("nodes not of type string, int or list")
+        return DIGd(subgraph)
 
+    # All functions that are needed solely for DIGs
+
+    def get_intvals_on_dot(self, dot):
+        intvals = []
+        for key, intval in six.iteritems(self.vertices):
+            offset = intval['offset']
+            steps = intval['steps']
+            jump = intval['jump']
+
+            if (offset <= dot) and (dot <= offset + steps*jump):
+                if ((dot-offset) % jump) == 0:
+                    intvals.append(key)
+        return intvals
+
+# def greedy_color(D):
+#     """Greedy coloring algorithm by Vladimir Yanovsky """
+#     coloring = dict.fromkeys(D.vertices.keys(),[])
+#     coloring_end_x = []
+#     coloring_passing_y = []
+#     coloring_around_z = []
+#     for i in range(D.start, D.finish+2):
+#         color_not_used_in_i = colors - prev colors
+#         
+#         for jump = range(D.max_jump):
+#             color_passing_and_end = [x for x in coloring_end_x or coloring_passing_y]
+#             color_not_used_in_i_with_d = [x in coloring_around_z and x not in color_passing_and_end]
+# 
+#         for p in Pdi:
+#             if len(color_not_used_in_i_with_d):
+#                 color(p) = pop(color_not_used_in_i)
+#             elif len(color_not_used_in_i):
+#                 color(p) = pop(color_not_used_in_i_with_d)
+#             else:
+#                 c = newColor
+#                 C = C.append(c)
+#                 color(p) = c
+#     return coloring
 
 # create a cycle in DIG2 of length n
 # assume a cycle is always of length larger than 0
@@ -352,7 +400,7 @@ def plot_bipartite_graph(G):
 
 # create a random dig within interval tup_int_val 
 # with maximal jump max_jump containing num_vertices vertices
-def create_random_dig(tup_int_val, max_jump, num_vertices):
+def create_random_dig(intval_end, max_jump, num_vertices):
     """returns a random DIGd graph
 
     Keywords:
@@ -361,17 +409,15 @@ def create_random_dig(tup_int_val, max_jump, num_vertices):
     num_vertices-- number of vertices (i.e. intervals) to be created within interval
     """
     vertices = {}
-    intval_start = tup_int_val[0]
-    intval_end = tup_int_val[1]
 
     for i in range(num_vertices):
-        offset = randint(intval_start, intval_end)
+        offset = randint(0, intval_end)
         jump = randint(0, min(max_jump,intval_end - offset))
-        steps = randint(0, (intval_end - offset) // max_jump)
+        steps = randint(0, (intval_end - offset) // max(max_jump,1))
         
         vertices[i] = {"offset": offset,
                         "jump": jump,
-                        "steps": steps} #.update((offset, jump, steps))
+                        "steps": steps} 
 
     return DIGd(vertices)
 
@@ -440,20 +486,47 @@ def reduce_intval(vertices, dic_of_reduc_vert, i, ld):
             steps = vertices[key]['steps']
 
             vertices[key] = {'offset': offset, 'jump': jump, 'steps': steps-(ld//jump)}
-            #vertices[index] = (offset, jump, steps - (ld // jump))
     return vertices
 
 def sample():
     D = DIGd([(1,2,20),(0,2,20),(1,1,4)])
     return D
 
+import os
+import numpy as np
+
 if __name__ == "__main__":
-    d = create_random_dig((0,100), 3, 30) 
-    print("density of d: " + str(nx.density(d)))
-    print("coloring of d: ")
-    print(nx.coloring.greedy_color(d))
-    print("maximal_matching of d: ")
-    print(nx.matching.maximal_matching(d))
+    try:
+        os.remove("workfile.txt")
+    except:
+        pass
+
+    f = open('workfile.txt', 'w+')
+    f.write('(intval, jump) \n')
+
+    intvals = (10, 50)
+    exist_intval = 10
+    maxjump = 3
+    repetitions = 10000
+    count = 0
+
+    for intvalnum in range(intvals[0], intvals[1]):
+        print("interval: " + str(intvalnum))
+        for jump in range(2,maxjump):
+            av_dens = 0
+            for repeat in range(repetitions):
+                d = create_random_dig(exist_intval, jump, intvalnum)
+                av_dens += nx.density(d)
+            av_dens = av_dens/repeat
+            f.write('{:10.10f} {count}\n'.format(av_dens, count=count))
+            count += 1
+    f.close()
+    # d = create_random_dig((0,100), 3, 30) 
+    # print("density of d: " + str(nx.density(d)))
+    # print("coloring of d: ")
+    # print(nx.coloring.greedy_color(d))
+    # print("maximal_matching of d: ")
+    # print(nx.matching.maximal_matching(d))
 
 
 
