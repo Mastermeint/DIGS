@@ -493,7 +493,6 @@ def sample():
     return D
 
 import os
-import numpy as np
 
 if __name__ == "__main__":
     try:
@@ -508,18 +507,16 @@ if __name__ == "__main__":
     exist_intval = 10
     maxjump = 3
     repetitions = 10000
-    count = 0
 
     for intvalnum in range(intvals[0], intvals[1]):
         print("interval: " + str(intvalnum))
-        for jump in range(2,maxjump):
+        for jump in range(maxjump-1,maxjump):
             av_dens = 0
             for repeat in range(repetitions):
                 d = create_random_dig(exist_intval, jump, intvalnum)
                 av_dens += nx.density(d)
             av_dens = av_dens/repeat
-            f.write('{:10.10f} {count}\n'.format(av_dens, count=count))
-            count += 1
+            f.write('{:10.10f} {count}\n'.format(av_dens, count=intvalnum))
     f.close()
     # d = create_random_dig((0,100), 3, 30) 
     # print("density of d: " + str(nx.density(d)))
